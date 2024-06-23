@@ -1,0 +1,55 @@
+//ขั้นตอนที่ 1: การเตรียมพื้นที่และวัตถุในเกม
+//เปิด Roblox Studio และสร้างโปรเจคใหม่ (เลือก Baseplate)
+//เพิ่มเหรียญลงในพื้นที่ โดยสามารถใช้วัตถุ Part แทนเหรียญได้ (ทำซ้ำหลายๆ ครั้งเพื่อให้มีหลายเหรียญ)
+//ขั้นตอนที่ 2: การเพิ่มสคริปต์เพื่อจัดการเกม
+//คลิกขวาที่ Workspace ใน Explorer window แล้วเลือก Insert Object -> Script
+//ใส่โค้ดต่อไปนี้ลงในสคริปต์
+//โค้ดสำหรับการสร้างเหรียญและตรวจจับการเก็บเหรียญ
+
+-- จำนวนเหรียญทั้งหมดในเกม
+local totalCoins = 10
+
+-- สร้างฟังก์ชันเพื่อสร้างเหรียญ
+function createCoin(position)
+    local coin = Instance.new("Part")
+    coin.Size = Vector3.new(1, 1, 1)
+    coin.Position = position
+    coin.Anchored = true
+    coin.BrickColor = BrickColor.new("Bright yellow")
+    coin.Name = "Coin"
+    coin.Parent = workspace
+end
+
+-- สร้างเหรียญทั้งหมดและกระจายมันในพื้นที่
+for i = 1, totalCoins do
+    local x = math.random(-50, 50)
+    local y = 1
+    local z = math.random(-50, 50)
+    createCoin(Vector3.new(x, y, z))
+end
+
+-- ฟังก์ชันเพื่อตรวจจับการเก็บเหรียญ
+function onTouch(hit)
+    if hit.Name == "Coin" then
+        hit:Destroy()
+        totalCoins = totalCoins - 1
+        print("Coin collected! Coins remaining: " .. totalCoins)
+
+        if totalCoins == 0 then
+            print("Congratulations! You collected all the coins!")
+        end
+    end
+end
+
+-- เพิ่ม Event เพื่อจับการชนของเหรียญ
+workspace.Touched:Connect(onTouch)
+
+//อธิบายโค้ด:
+//สร้างเหรียญ: เราสร้างฟังก์ชัน createCoin เพื่อสร้างเหรียญ (ใช้ Part) และกำหนดขนาด ตำแหน่ง และสี
+//กระจายเหรียญ: ใช้ for loop เพื่อสร้างเหรียญจำนวน totalCoins และกระจายเหรียญในพื้นที่โดยการสุ่มตำแหน่ง x และ z
+//ตรวจจับการเก็บเหรียญ: เราสร้างฟังก์ชัน onTouch เพื่อจับ Event การชนของเหรียญ และทำลายเหรียญเมื่อถูกเก็บ พร้อมกับลดจำนวนเหรียญที่เหลืออยู่ ถ้าเหรียญทั้งหมดถูกเก็บแล้วจะพิมพ์ข้อความแสดงความยินดี
+//เชื่อมต่อ Event: ใช้ workspace.Touched:Connect(onTouch) เพื่อเชื่อมต่อฟังก์ชัน onTouch กับ Event Touched ของ workspace
+//การทดสอบเกม
+//คลิกปุ่ม Play ใน Roblox Studio
+//เคลื่อนที่ในเกมเพื่อชนกับเหรียญ เมื่อชนเหรียญ เหรียญจะหายไปและจะแสดงข้อความในหน้าต่าง Output
+//เมื่อเก็บเหรียญครบแล้ว จะแสดงข้อความแสดงความยินดี
