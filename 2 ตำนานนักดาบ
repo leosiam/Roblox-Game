@@ -1,0 +1,117 @@
+https://www.roblox.com/games/18260967520/Lession2
+
+1. สร้าง Script ใน ServerScriptService เพื่อสุ่มสร้างกำแพง
+-- Script ใน ServerScriptService
+==================================================================================
+local numWalls = 30
+local minX = -100
+local maxX = 100
+local minZ = -100
+local maxZ = 100
+local height = 10
+local wallThickness = 2
+local wallHeight = 20
+local wallLength = 40
+
+for i = 1, numWalls do
+    local part = Instance.new("Part")
+    part.Size = Vector3.new(wallThickness, wallHeight, wallLength)
+    part.Position = Vector3.new(math.random(minX, maxX), height, math.random(minZ, maxZ))
+    part.Anchored = true
+    part.BrickColor = BrickColor.random()
+
+    -- สุ่มการหมุนของกำแพง
+    local randomRotation = math.random(0, 1) * 90
+    part.Orientation = Vector3.new(0, randomRotation, 0)
+
+    part.Parent = game.Workspace
+end
+
+==================================================================================
+จับ Event เมื่อผู้เล่นฆ่าผู้เล่นคนอื่น
+Script ใน ServerScriptService เพื่อตรวจจับการฆ่า
+==================================================================================
+-- Script ใน ServerScriptService
+local function onPlayerAdded(player)
+    -- Create leaderstats folder
+    local leaderstats = Instance.new("Folder")
+    leaderstats.Name = "leaderstats"
+    leaderstats.Parent = player
+
+    -- Create kills counter
+    local kills = Instance.new("IntValue")
+    kills.Name = "Kills"
+    kills.Value = 0
+    kills.Parent = leaderstats
+
+    -- Create deaths counter
+    local deaths = Instance.new("IntValue")
+    deaths.Name = "Deaths"
+    deaths.Value = 0
+    deaths.Parent = leaderstats
+
+    -- Detect when player dies
+    player.CharacterAdded:Connect(function(character)
+        local humanoid = character:WaitForChild("Humanoid")
+
+        humanoid.Died:Connect(function()
+            deaths.Value = deaths.Value + 1
+
+            local killer = humanoid:FindFirstChild("creator")
+            if killer and killer.Value then
+                local killerPlayer = game.Players:FindFirstChild(killer.Value)
+                if killerPlayer then
+                    killerPlayer.leaderstats.Kills.Value = killerPlayer.leaderstats.Kills.Value + 1
+                end
+            end
+        end)
+    end)
+end
+
+game.Players.PlayerAdded:Connect(onPlayerAdded)
+
+============================================================
+กระโดดสูง
+==StarterPlayer.StarterPlayScripts  LocalScript============================================================
+
+local userInputService = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+local canDash = false
+
+-- ตรวจจับการกระโดด
+local function onJumpRequest()
+    canDash = true
+end
+
+-- ตรวจจับการพุ่งเมื่อกดปุ่ม E
+local function onKeyPress(input, gameProcessedEvent)
+    if gameProcessedEvent then return end
+
+    if input.KeyCode == Enum.KeyCode.E and canDash then
+        -- สร้าง BodyVelocity เพื่อพุ่งไปข้างหน้า
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.Velocity = humanoidRootPart.CFrame.LookVector * 300
+        bodyVelocity.MaxForce = Vector3.new(5000, 0, 5000) -- จำกัดแรงในแนวนอนเท่านั้น
+        bodyVelocity.Parent = humanoidRootPart
+
+        -- ลบ BodyVelocity หลังจาก 0.5 วินาที
+        game:GetService("Debris"):AddItem(bodyVelocity, 0.5)
+
+        canDash = false
+    end
+end
+
+userInputService.JumpRequest:Connect(onJumpRequest)
+userInputService.InputBegan:Connect(onKeyPress)
+
+-- รีเฟรช character เมื่อ respawn
+player.CharacterAdded:Connect(function(char)
+    character = char
+    humanoid = char:WaitForChild("Humanoid")
+    humanoidRootPart = char:WaitForChild("HumanoidRootPart")
+end)
+
