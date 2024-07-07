@@ -1,0 +1,168 @@
+-- สำหรับ LocalScript ใน StarterPlayerScripts
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- ปรับปรุงฟิสิกส์ใต้น้ำ
+humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, true)
+
+-- ฟังก์ชันโจมตี
+function attack()
+	print("Attacking!")  -- แสดงข้อความเมื่อโจมตี
+	-- ตรงนี้สามารถเพิ่มการโจมตี, เอฟเฟกต์, หรือการคำนวณความเสียหาย
+end
+
+-- ควบคุมการโจมตี
+game:GetService("UserInputService").InputBegan:Connect(function(input, isTyping)
+	if isTyping then return end
+	if input.KeyCode == Enum.KeyCode.F then  -- กด F เพื่อโจมตี
+		attack()
+	end
+end)
+
+-- ระบบออกซิเจน
+local oxygenLevel = 100  -- เริ่มต้นออกซิเจน 100%
+game:GetService("RunService").Heartbeat:Connect(function(deltaTime)
+	if humanoid:GetState() == Enum.HumanoidStateType.Swimming then
+		oxygenLevel = oxygenLevel - deltaTime * 5  -- ลดออกซิเจนตามเวลา
+		if oxygenLevel <= 0 then
+			humanoid.Health = 0  -- ตายเมื่อหมดออกซิเจน
+		end
+	else
+		oxygenLevel = math.min(100, oxygenLevel + deltaTime * 10)  -- ฟื้นฟูออกซิเจนเร็วกว่าที่ใช้
+	end
+end)
+
+-- แสดงออกซิเจนบน UI
+local screenGui = Instance.new("ScreenGui", player.PlayerGui)
+local oxygenBar = Instance.new("TextLabel", screenGui)
+oxygenBar.Size = UDim2.new(0.25, 0, 0.05, 0)
+oxygenBar.Position = UDim2.new(0.1, 0, 0.1, 0)
+oxygenBar.Text = "Oxygen: 100%"
+oxygenBar.BackgroundColor3 = Color3.new(0.5, 0.5, 1)
+
+-- อัพเดท UI
+game:GetService("RunService").Heartbeat:Connect(function()
+	oxygenBar.Text = "Oxygen: " .. math.max(0, math.floor(oxygenLevel)) .. "%"
+	oxygenBar.BackgroundColor3 = Color3.fromHSV(0, 1 - oxygenLevel / 100, 1)
+end)
+
+==========================================================================
+==Serverscript==
+local numWalls = 500
+local minX = -500
+local maxX = 500
+local minZ = -500
+local maxZ = 500
+local height = 30
+local wallThickness = 2
+local wallHeight = 200
+local wallLength = 40
+
+for i = 1, numWalls do
+	local part = Instance.new("Part")
+	part.Size = Vector3.new(wallThickness, wallHeight, wallLength)
+	part.Position = Vector3.new(math.random(minX, maxX), height, math.random(minZ, maxZ))
+	part.Anchored = true
+	part.BrickColor = BrickColor.random()
+
+	-- สุ่มการหมุนของกำแพง
+	local randomRotation = math.random(0, 1) * 90
+	part.Orientation = Vector3.new(0, randomRotation, 0)
+
+	part.Parent = game.Workspace
+end
+
+
+=============================================Server Scrip
+local function onPlayerAdded(player)
+	-- Create leaderstats folder
+	local leaderstats = Instance.new("Folder")
+	leaderstats.Name = "leaderstats"
+	leaderstats.Parent = player
+
+	-- Create kills counter
+	local kills = Instance.new("IntValue")
+	kills.Name = "Kills"
+	kills.Value = 0
+	kills.Parent = leaderstats
+
+	-- Create deaths counter
+	local deaths = Instance.new("IntValue")
+	deaths.Name = "Deaths"
+	deaths.Value = 0
+	deaths.Parent = leaderstats
+	
+	local coins = Instance.new("IntValue", leaderstats)
+	coins.Name = "Coins"
+	coins.Value = 0
+
+	-- Detect when player dies
+	player.CharacterAdded:Connect(function(character)
+		local humanoid = character:WaitForChild("Humanoid")
+
+		humanoid.Died:Connect(function()
+			deaths.Value = deaths.Value + 1
+
+			local killer = humanoid:FindFirstChild("creator")
+			if killer and killer.Value then
+				local killerPlayer = game.Players:FindFirstChild(killer.Value)
+				if killerPlayer then
+					killerPlayer.leaderstats.Kills.Value = killerPlayer.leaderstats.Kills.Value + 1
+				end
+			end
+		end)
+	end)
+end
+
+game.Players.PlayerAdded:Connect(onPlayerAdded)
+=======================================================================
+== Server Script
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local coinPrefab = replicatedStorage:WaitForChild("Coin")  -- เปลี่ยนชื่อเป็นชื่อ prefab ของคุณ
+local spawnArea = workspace:WaitForChild("SpawnArea")  -- ต้องมีพื้นที่ใน Workspace ที่ชื่อว่า SpawnArea
+
+-- ฟังก์ชันสร้างเหรียญ
+function spawnCoins()
+	for i = 1, 100 do  -- สร้าง 10 เหรียญ
+		local newCoin = coinPrefab:Clone()
+		local x = math.random(-100, 100)  -- ขอบเขตการสุ่มตามขนาดของฉาก
+		local z = math.random(-100, 100)  -- ขอบเขตการสุ่มตามขนาดของฉาก
+		newCoin.Position = spawnArea.Position + Vector3.new(x, 50, z)  -- ปรับค่า y หากต้องการ
+		newCoin.Parent = workspace
+		newCoin.Anchored = true  -- ตรวจสอบว่าคุณต้องการให้เหรียญนิ่งหรือไม่
+	end
+end
+
+-- ลบเหรียญเก่าและสร้างใหม่ทุกๆ 1 นาที
+while true do
+	spawnCoins()  -- สร้างเหรียญใหม่
+	wait(60)  -- รอ 60 วินาที
+	
+end
+
+=========================================================
+====Script  Coin
+
+local coin = script.Parent  -- เหรียญที่สคริปต์นี้อยู่
+
+-- ฟังก์ชันที่จะเรียกเมื่อมีการสัมผัสเหรียญ
+local function onTouched(hit)
+	local character = hit.Parent
+	local player = game.Players:GetPlayerFromCharacter(character)
+
+	if player then
+		-- เพิ่มคะแนนหรือจำนวนเหรียญ
+		if player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Coins") then
+			player.leaderstats.Coins.Value = player.leaderstats.Coins.Value + 1
+		end
+		coin:Destroy()  -- ทำลายเหรียญเมื่อถูกรวบรวม
+	end
+end
+
+-- ตั้งค่าการตอบสนองต่อการสัมผัส
+coin.Touched:Connect(onTouched)
+
+
+
