@@ -1,0 +1,82 @@
+-- อ้างอิงถึง UserInputService และ Players
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+
+-- ตัวแปรสถานะคูลดาวน์สำหรับการล่องหนและการย้ายตำแหน่ง
+local canInvis = true
+local canTeleport = true
+
+-- ฟังก์ชันเพื่อล่องหนตัวละคร
+local function makeInvisible()
+	if canInvis then
+		canInvis = false
+
+		local player = Players.LocalPlayer
+		local character = player.Character
+
+		if character then
+			for _, part in pairs(character:GetChildren()) do
+				if part:IsA("BasePart") then
+					part.Transparency = 1
+					if part:FindFirstChild("face") then
+						part.face.Transparency = 1
+					end
+					part.CanCollide = false
+				elseif part:IsA("Accessory") then
+					part.Handle.Transparency = 1
+					part.Handle.CanCollide = false
+				end
+			end
+
+			-- รอ 10 วินาทีแล้วกลับมาเป็นปกติ
+			wait(10)
+
+			for _, part in pairs(character:GetChildren()) do
+				if part:IsA("BasePart") then
+					part.Transparency = 0
+					if part:FindFirstChild("face") then
+						part.face.Transparency = 0
+					end
+					part.CanCollide = true
+				elseif part:IsA("Accessory") then
+					part.Handle.Transparency = 0
+					part.Handle.CanCollide = true
+				end
+			end
+
+			-- รอ 10 วินาทีแล้วตั้งค่าสถานะคูลดาวน์ให้เป็น true
+			wait(10)
+			canInvis = true
+		end
+	end
+end
+
+-- ฟังก์ชันเพื่อย้ายตัวละครไปยังตำแหน่งสุ่ม
+local function teleportToRandomPosition()
+	if canTeleport then
+		canTeleport = false
+
+		local player = Players.LocalPlayer
+		local character = player.Character
+		local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+
+		if humanoidRootPart then
+			-- สุ่มตำแหน่งในพื้นที่ที่กำหนด
+			local randomPosition = Vector3.new(math.random(-100, 100), 50, math.random(-100, 100))
+			humanoidRootPart.CFrame = CFrame.new(randomPosition)
+		end
+
+		-- รอ 10 วินาทีแล้วตั้งค่าสถานะคูลดาวน์ให้เป็น true
+		wait(10)
+		canTeleport = true
+	end
+end
+
+-- ตรวจจับการกดปุ่ม 'Q' และ 'E'
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+	if input.KeyCode == Enum.KeyCode.Q and not gameProcessedEvent then
+		makeInvisible()
+	elseif input.KeyCode == Enum.KeyCode.E and not gameProcessedEvent then
+		teleportToRandomPosition()
+	end
+end)
