@@ -1,0 +1,49 @@
+-- สร้างตารางเก็บ EXP สำหรับผู้เล่น
+local Players = game:GetService("Players")
+local expPerKill = 50 -- กำหนดค่า EXP ที่ได้ต่อการฆ่า 1 ตัว
+
+local playerExp = {}
+
+-- ฟังก์ชันสำหรับการเพิ่ม EXP
+local function addExp(player)
+    if not playerExp[player] then
+        playerExp[player] = 0
+    end
+    playerExp[player] = playerExp[player] + expPerKill
+
+    -- อัพเดต GUI EXP ของผู้เล่น
+    local playerGui = player:FindFirstChild("PlayerGui")
+    if playerGui then
+        local expLabel = playerGui:FindFirstChild("EXPLabel", true)
+        if expLabel then
+            expLabel.Text = "EXP: " .. playerExp[player]
+        end
+    end
+end
+
+-- เมื่อผู้เล่นฆ่าศัตรู
+local function onCharacterDeath(character, killer)
+    if killer and killer:IsA("Player") then
+        addExp(killer)
+    end
+end
+
+-- ฟังก์ชันสำหรับตรวจสอบการตาย
+local function onPlayerAdded(player)
+    player.CharacterAdded:Connect(function(character)
+        -- เชื่อมต่อการตรวจสอบการตาย
+        local humanoid = character:WaitForChild("Humanoid")
+        humanoid.Died:Connect(function()
+            local tag = humanoid:FindFirstChild("creator") -- ตรวจสอบว่าใครเป็นคนฆ่า
+            if tag then
+                local killer = tag.Value
+                if killer:IsA("Player") then
+                    onCharacterDeath(character, killer)
+                end
+            end
+        end)
+    end)
+end
+
+-- เชื่อมต่อกับการเข้าร่วมของผู้เล่น
+Players.PlayerAdded:Connect(onPlayerAdded)
