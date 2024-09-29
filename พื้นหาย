@@ -1,0 +1,30 @@
+local platform = script.Parent -- พื้นที่ผู้เล่นจะเหยียบ
+local respawnTime = 5 -- เวลาที่พื้นจะปรากฏใหม่
+local disappearTime = 2 -- เวลาที่พื้นจะค่อยๆ หายไป
+local tweenService = game:GetService("TweenService")
+
+-- ฟังก์ชันการทำให้พื้นค่อยๆ หายไป
+local function disappearPlatform()
+    local tweenInfo = TweenInfo.new(disappearTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    local goal = {Transparency = 1} -- ทำให้พื้นโปร่งใส
+    local tween = tweenService:Create(platform, tweenInfo, goal)
+    tween:Play()
+    
+    tween.Completed:Wait() -- รอให้การทำงานเสร็จสิ้น
+    platform.CanCollide = false -- ปิดการชน เพื่อให้ผู้เล่นตกลงไป
+    wait(respawnTime) -- รอให้พื้นกลับมาปรากฏใหม่
+    
+    -- รีเซ็ตพื้น
+    platform.CanCollide = true
+    platform.Transparency = 0 -- ทำให้พื้นไม่โปร่งใส
+end
+
+-- ฟังก์ชันที่ทำงานเมื่อผู้เล่นเหยียบพื้น
+local function onTouched(hit)
+    if hit.Parent:FindFirstChild("Humanoid") then -- ตรวจสอบว่ามีผู้เล่นเหยียบพื้นหรือไม่
+        disappearPlatform()
+    end
+end
+
+-- เชื่อมต่อกับ Touched Event
+platform.Touched:Connect(onTouched)
