@@ -1,0 +1,19 @@
+local water = script.Parent -- อ้างอิงถึงน้ำ
+local tweenService = game:GetService("TweenService")
+
+-- ตั้งค่าตำแหน่งสูงสุดและต่ำสุดที่น้ำจะขึ้นและลง
+local upperPosition = water.Position + Vector3.new(0, 10, 0) -- จุดที่น้ำขึ้นไปสูงสุด
+local lowerPosition = water.Position -- จุดเริ่มต้นของน้ำ
+
+-- ตั้งค่าความเร็วในการขึ้นลงของน้ำ
+local tweenInfo = TweenInfo.new(5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1, true)
+
+-- สร้างเป้าหมาย (Goal) สำหรับการเคลื่อนไหวของน้ำขึ้น
+local goal = {}
+goal.Position = upperPosition
+
+-- สร้าง Tween เพื่อทำให้น้ำขึ้น
+local tweenUp = tweenService:Create(water, tweenInfo, goal)
+
+-- เริ่มต้นการเคลื่อนไหวของน้ำขึ้น
+tweenUp:Play()
