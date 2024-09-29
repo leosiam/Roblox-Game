@@ -1,0 +1,52 @@
+local laserOrigin = script.Parent.Position -- จุดเริ่มต้นของเลเซอร์ (สามารถเป็นตำแหน่งใดก็ได้)
+local laserLength = 100 -- ความยาวของเลเซอร์
+local laserCount = 10 -- จำนวนเลเซอร์ที่ต้องการสุ่มยิง
+local laserDamage = 100 -- ค่าความเสียหาย (ทำให้ผู้เล่นตาย)
+local random = Random.new() -- ตัวสุ่มสำหรับเลเซอร์
+local runService = game:GetService("RunService")
+
+-- ฟังก์ชันสำหรับสร้างและยิงเลเซอร์
+local function fireLaser()
+    for i = 1, laserCount do
+        -- กำหนดทิศทางเลเซอร์แบบสุ่ม
+        local randomDirection = Vector3.new(random:NextNumber(-1, 1), random:NextNumber(-1, 1), random:NextNumber(-1, 1)).Unit
+        
+        -- สร้างจุดปลายของเลเซอร์
+        local laserEnd = laserOrigin + (randomDirection * laserLength)
+        
+        -- สร้าง Ray สำหรับเลเซอร์
+        local ray = Ray.new(laserOrigin, randomDirection * laserLength)
+        
+        -- ตรวจสอบการชนด้วย Raycast
+        local hit, position = workspace:FindPartOnRay(ray)
+        
+        -- ถ้ามีวัตถุที่ถูกชน
+        if hit then
+            local character = hit.Parent
+            local humanoid = character:FindFirstChild("Humanoid")
+
+            if humanoid then
+                humanoid.Health = 0 -- ทำให้ผู้เล่นตาย
+            end
+        end
+        
+        -- สร้างเลเซอร์ให้มองเห็น (Optical Effect)
+        local laserPart = Instance.new("Part")
+        laserPart.Anchored = true
+        laserPart.CanCollide = false
+        laserPart.Material = Enum.Material.Neon
+        laserPart.BrickColor = BrickColor.new("Bright red")
+        laserPart.Size = Vector3.new(0.2, 0.2, laserLength)
+        laserPart.CFrame = CFrame.new(laserOrigin, laserEnd) * CFrame.new(0, 0, -laserLength / 2)
+        laserPart.Parent = workspace
+        
+        -- ลบเลเซอร์หลังจาก 0.5 วินาที
+        game:GetService("Debris"):AddItem(laserPart, 0.5)
+    end
+end
+
+-- เรียกใช้ฟังก์ชันเลเซอร์ทุก ๆ 2 วินาที
+while true do
+    fireLaser()
+    wait(2)
+end
