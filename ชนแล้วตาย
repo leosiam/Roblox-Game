@@ -1,0 +1,13 @@
+local killPart = script.Parent -- วัตถุที่จะฆ่าผู้เล่นเมื่อชน
+
+local function onTouched(hit)
+    local character = hit.Parent
+    local humanoid = character:FindFirstChild("Humanoid") -- ตรวจสอบว่าผู้เล่นชนกับวัตถุหรือไม่
+
+    if humanoid then
+        humanoid.Health = 0 -- ตั้งค่า Health ของ Humanoid เป็น 0 เพื่อให้ผู้เล่นตาย
+    end
+end
+
+-- เชื่อมต่อฟังก์ชันกับเหตุการณ์ Touched
+killPart.Touched:Connect(onTouched)
