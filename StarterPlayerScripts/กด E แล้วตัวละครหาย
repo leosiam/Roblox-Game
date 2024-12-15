@@ -1,0 +1,80 @@
+
+--StarterPlayerScripts/LocalScript
+
+local VANISH_TIME = 3 
+local COOLDOWN_TIME = 10 -- เวลารอคอยระหว่างการใช้ (วินาที)
+local Players = game:GetService("Players") -- เรียกบริการผู้เล่น
+
+-- ตารางเพื่อเก็บสถานะ Cooldown ของแต่ละผู้เล่น
+local playerCooldowns = {}
+
+-- ฟังก์ชันทำให้ผู้เล่นหายตัว
+local function vanishPlayer(player)
+	local character = player.Character
+	if character and character:FindFirstChild("Humanoid") then
+		-- ซ่อนตัวละคร (เปลี่ยน Transparency ของทุกส่วน)
+		for _, part in pairs(character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Transparency = 1 -- ซ่อนทุกส่วน
+				part.CanCollide = false -- ปิดการชน
+			elseif part:IsA("Decal") then
+				part.Transparency = 1 -- ซ่อน Decal (ภาพบนพื้นผิว)
+			end
+		end
+		-- ซ่อนชื่อผู้เล่น
+		if character:FindFirstChild("Humanoid") then
+			character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+		end
+	end
+end
+
+-- ฟังก์ชันทำให้ผู้เล่นกลับมาเป็นปกติ
+local function reappearPlayer(player)
+	local character = player.Character
+	if character and character:FindFirstChild("Humanoid") then
+		-- แสดงตัวละคร (เปลี่ยน Transparency ของทุกส่วน)
+		for _, part in pairs(character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Transparency = 0 -- ทำให้ทุกส่วนมองเห็นได้
+				part.CanCollide = true -- เปิดการชน
+			elseif part:IsA("Decal") then
+				part.Transparency = 0 -- แสดง Decal
+			end
+		end
+		-- แสดงชื่อผู้เล่น
+		if character:FindFirstChild("Humanoid") then
+			character.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.Viewer
+		end
+	end
+end
+
+-- ฟังก์ชันสำหรับเมื่อผู้เล่นกดปุ่ม E
+local function onKeyPress(input, gameProcessed)
+	-- ตรวจสอบว่าปุ่มที่กดคือ E
+	if input.KeyCode == Enum.KeyCode.E and not gameProcessed then
+		print('xx')
+		local player = Players.LocalPlayer
+		-- ตรวจสอบสถานะ cooldown ของผู้เล่น
+		if not playerCooldowns[player] or tick() - playerCooldowns[player] >= COOLDOWN_TIME then
+			playerCooldowns[player] = tick() -- บันทึกเวลาที่ผู้เล่นใช้ทักษะ
+			vanishPlayer(player) -- เรียกฟังก์ชันซ่อนตัว
+			-- หลังจาก VANISH_TIME วินาที ให้ผู้เล่นกลับมาเป็นปกติ
+			task.delay(VANISH_TIME, function()
+				reappearPlayer(player)
+			end)
+		else
+			local remainingCooldown = math.ceil(COOLDOWN_TIME - (tick() - playerCooldowns[player]))
+			print("ต้องรออีก " .. remainingCooldown .. " วินาทีเพื่อใช้ทักษะอีกครั้ง")
+		end
+	end
+end
+
+-- กำหนดให้ฟังก์ชัน onKeyPress ทำงานเมื่อกดปุ่ม
+game:GetService("UserInputService").InputBegan:Connect(onKeyPress)
+
+-- กำหนดให้เมื่อผู้เล่นเข้ามาในเกม ระบบจะสร้างสถานะเริ่มต้นให้ผู้เล่น
+Players.PlayerAdded:Connect(function(player)
+	playerCooldowns[player] = 0 -- เริ่มต้นไม่มีคูลดาวน์
+end)
+
+
